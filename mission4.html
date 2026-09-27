@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>미션 4: 햇빛 금고</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <script defer src="js/main.js"></script>
+  <script defer src="js/rewards.js"></script>
+  <script defer src="js/dragdrop.js"></script>
+  <script defer src="js/mission4.js"></script>
+
+  <style>
+    /* 전체 화면 레이아웃 및 공통 디자인 */
+    body, html {
+      min-height: 100vh; margin: 0; display: flex; flex-direction: column;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a3c23 0%, #3a5a40 100%); position: relative;
+      transition: background 1s ease;
+    }
+
+    body.night-theme { background: linear-gradient(135deg, #263238 0%, #1c313a 100%) !important; }
+
+    .top-bar { position: absolute; top: 20px; left: 20px; z-index: 100; }
+    .back-btn {
+      background-color: rgba(255, 255, 255, 0.85); color: #1a3c23; text-decoration: none;
+      padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 0.95rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
+      backdrop-filter: blur(8px); display: inline-flex; align-items: center; transition: all 0.3s ease;
+    }
+    .back-btn:hover { background-color: #ffffff; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+
+    .mission-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 80px 20px 40px 20px; box-sizing: border-box; }
+    .mission-card { background: #ffffff; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 1000px; width: 100%; transition: all 1s ease; }
+    body.night-theme .mission-card { background: #263238; border: 1px solid #455a64; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+
+    /* 미션 헤더 박스 */
+    .mission-header-box { background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%); padding: 35px 20px; border-radius: 12px; border: 1px solid #c5e1a5; margin-bottom: 25px; text-align: center; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); transition: all 1s ease; }
+    .mission-header-box h2 { color: #2e7d32; margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .mission-header-box hr { border: 0; border-top: 1px solid #aed581; margin: 18px auto; width: 95%; }
+    .mission-header-box p { color: #33691e; font-size: 1.05rem; margin: 0; font-weight: 500; letter-spacing: -0.3px; }
+    body.night-theme .mission-header-box { background: linear-gradient(135deg, #37474f 0%, #263238 100%); border-color: #546e7a; }
+    body.night-theme .mission-header-box h2 { color: #fff9c4; }
+    body.night-theme .mission-header-box hr { border-top-color: #546e7a; }
+    body.night-theme .mission-header-box p { color: #cfd8dc; }
+
+    /* 직사각형 스텝 버튼 */
+    .step-indicator { display: flex; gap: 8px; justify-content: space-between; margin-bottom: 35px; width: 100%; }
+    .step-item { flex: 1; background-color: #f4f5f6; color: #b0b8c1; padding: 12px 5px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; text-align: center; line-height: 1.4; transition: all 0.2s ease; border: 1px solid transparent; }
+    .step-item.completed { background-color: #dcedc8; color: #33691e; border: 1px solid #aed581; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .step-item.active, .step-item.completed:hover { background-color: #689f38; color: #ffffff; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); border-color: #558b2f; }
+    body.night-theme .step-item { background-color: #37474f; color: #78909c; }
+    body.night-theme .step-item.completed { background-color: #455a64; color: #90caf9; border-color: #546e7a; }
+    body.night-theme .step-item.active { background-color: #1e88e5; color: #ffffff; border-color: #1565c0; }
+
+    /* 공통 퀴즈 및 버튼 스타일 */
+    .interactive-box { margin-bottom: 30px; animation: fadeIn 0.5s ease-in-out; }
+    .interactive-box h3 { margin-top: 0; color: #1b5e20; border-bottom: 2px solid #e8f5e9; padding-bottom: 10px; transition: color 1s; }
+    body.night-theme .interactive-box h3 { color: #fff9c4; border-bottom-color: #455a64; }
+    
+    .organelle-input { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #b0bec5; border-radius: 6px; font-size: 1rem; box-sizing: border-box; outline: none; }
+    .organelle-input:focus { border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2); }
+    
+    .btn-action { background: #2e7d32; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-weight: bold; font-size: 1.05rem; cursor: pointer; width: auto; min-width: 160px; display: block; margin: 15px auto 0; transition: background 0.2s; }
+    .btn-action:hover { background: #1b5e20; }
+    .success-text { color: #2e7d32; font-weight: bold; margin-top: 15px; text-align: center; font-size: 1.05rem; background: #e8f5e9; padding: 10px; border-radius: 8px; }
+
+    /* 스텝 2 전용 어두운 테마 CSS */
+    .night-box { background-color: #263238; padding: 25px 20px; border-radius: 16px; box-shadow: inset 0 4px 15px rgba(0,0,0,0.3); }
+    .night-box .badge-pool { background: #37474f !important; border: 1px solid #455a64 !important; }
+    .night-box .dropzone { background: #37474f !important; border: 2px dashed #78909c !important; }
+    .night-box .dropzone.dnd-over { background: #455a64 !important; border-color: #90caf9 !important; }
+    #dz-xylem-1, #dz-xylem-2, #dz-phloem-1, #dz-phloem-2 { background-color: transparent !important; }
+    #dz-xylem-1.dnd-over, #dz-xylem-2.dnd-over { background-color: rgba(100, 181, 246, 0.3) !important; border-color: #90caf9 !important; }
+    #dz-phloem-1.dnd-over, #dz-phloem-2.dnd-over { background-color: rgba(255, 183, 77, 0.3) !important; border-color: #ffcc80 !important; }
+
+    /* 드래그 앤 드롭 스타일 */
+    .badge-pool { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; background: #f8fafc; border: 1px solid #cfd8dc; padding: 10px; border-radius: 12px; margin-bottom: 20px; min-height: 50px; }
+    #pool1 { border: 1px solid #cfd8dc !important; background: #f8fafc !important; }
+    .badge { display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 2px solid #81c784; border-radius: 25px; padding: 6px 14px; font-size: 0.95rem; font-weight: 700; color: #37474f; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.1); user-select: none; touch-action: none; transition: transform 0.1s; z-index: 10; }
+    .m4-badge-small { padding: 4px 10px; font-size: 0.85rem; border-radius: 15px; }
+    .badge:active { cursor: grabbing; transform: scale(1.05); }
+    .dnd-ghost { position: fixed; z-index: 10000; pointer-events: none; margin: 0; opacity: 0.9; }
+    .badge.dnd-source-dragging { opacity: 0.5; }
+
+    .dropzone { display: inline-flex; align-items: center; justify-content: center; min-width: 100px; min-height: 40px; background: #f8fcf8; border: 2px dashed #b0bec5; border-radius: 25px; margin: 0 4px; box-sizing: border-box; transition: all 0.2s; position: relative; }
+    .dropzone.dnd-over { background: #e3f2fd; border-color: #1e88e5; }
+    .dropzone:has(.badge) { border: none; background-color: transparent; }
+    .dropzone .badge { margin: 0; box-shadow: none; border-color: #4caf50; }
+    .multi-dropzone { width: 100%; max-width: 350px; min-height: 100px; background: #e8f5e9; border: 3px dashed #81c784; border-radius: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start; justify-content: center; padding: 40px 10px 15px; margin: 0 auto; }
+    .multi-dropzone.dnd-over { border-color: #66bb6a; background: #f1f8e9; }
+    .multi-dropzone:has(.badge) { border: 3px dashed #81c784; background: #e8f5e9; }
+
+    #plant-stage { font-size: 5rem; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), font-size 0.6s ease, text-shadow 0.6s; transform-origin: bottom center; margin-bottom: -15px; z-index: 10; }
+
+    /* 스텝 4 전용 CSS (1:2.2 비율 및 검정 글씨 적용) */
+    #step4-vault { 
+        display: grid; grid-template-columns: 1fr 1fr 80px; gap: 8px; 
+        background: #37474f; padding: 15px; border-radius: 16px; 
+        border: 4px solid #ffd700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); 
+    }
+    
+    .s4-slot { border: 2px dashed #90a4ae; background: #263238; border-radius: 8px; min-height: 50px; transition: all 0.3s; }
+    .s4-slot.dnd-over { border-color: #fbc02d; background: rgba(251, 192, 45, 0.3); }
+    .s4-slot:has(.badge) { 
+        background: linear-gradient(135deg, #ffeb3b, #fbc02d) !important; 
+        border: 2px solid #f57f17 !important; 
+        box-shadow: inset 0 0 15px rgba(255,255,255,0.5); 
+    }
+    
+    .s4-slot .badge { 
+        font-size: 0.85rem !important; 
+        padding: 4px 6px !important; 
+        border:none !important; 
+        background:transparent !important; 
+        color: #000000 !important; 
+        font-weight: 900; 
+        box-shadow: none !important;
+    }
+    
+    .s4-blocked { background: linear-gradient(135deg, #ffeb3b, #fbc02d); border-radius: 8px; border: none; box-shadow: inset 0 0 10px rgba(255,255,255,0.4); }
+    
+    .s4-label, .s4-header { 
+        background: #dcedc8 !important; 
+        color: #1b5e20 !important; 
+        border: 2px solid #aed581; 
+        border-radius: 8px; 
+        display: flex; align-items: center; justify-content: center; 
+        font-weight: 900; font-size: 1.05rem; text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .s4-header { padding: 8px 0; font-size: 1.1rem; letter-spacing: 1px; }
+    
+    /* 스텝 4 선 긋기 퀴즈 3단 레이아웃 CSS */
+    .line-quiz-container { position: relative; display: flex; justify-content: space-between; align-items: stretch; margin-top: 20px; padding: 30px; background: #f8fafc; border-radius: 12px; border: 2px solid #b0bec5; min-height: 500px; gap: 15px; }
+    .line-col { display: flex; flex-direction: column; gap: 15px; z-index: 2; justify-content: space-between; width: 35%;}
+    
+    .plant-img { width: 85px; height: 85px; background: #fff; border: 3px solid #81c784; border-radius: 16px; padding: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); user-select: none; }
+    .plant-img:hover { transform: scale(1.05); }
+    .plant-img.selected { background: #ffeb3b; border-color: #f57f17; box-shadow: 0 0 15px rgba(251,192,45,0.6); }
+    .plant-img.connected { opacity: 0.6; border-color: #aed581; background: #e8f5e9; }
+    .plant-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    
+    .line-col-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; z-index: 2; }
+    .center-target { background: #fff; border: 3px solid #64b5f6; border-radius: 20px; padding: 15px 40px; cursor: pointer; font-weight: 900; font-size: 1.3rem; color: #1565c0; transition: all 0.2s; user-select: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-width: 120px; text-align: center; }
+    .center-target:hover { transform: scale(1.05); background: #e3f2fd; }
+    
+    #line-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html" class="back-btn">⬅ 식물 연구소로 돌아가기</a>
+</div>
+
+<main class="mission-container">
+  <div class="mission-card">
+    
+    <div class="mission-header-box">
+      <h2>Mission 4: 햇빛 금고</h2>
+      <hr>
+      <p>식물의 양분 생성부터 이동, 이용, 그리고 햇빛 금고(저장)까지 알아봅시다.</p>
+    </div>
+    
+    <div class="step-indicator" id="m4-indicator">
+      <div class="step-item active" id="dot-1">Step 1<br>낮</div>
+      <div class="step-item" id="dot-2">Step 2<br>밤</div>
+      <div class="step-item" id="dot-3">Step 3<br>이용</div>
+      <div class="step-item" id="dot-4">Step 4<br>저장</div>
+    </div>
+    
+    <!-- STEP 1 (낮) -->
+    <div id="step1-box" class="interactive-box">
+      <h3>STEP 1. 양분의 생성</h3>
+      <p style="font-size: 0.95rem; color: #546e7a; line-height: 1.6; margin-top: 5px; word-break: keep-all;">
+        • 물, CO₂, 빛 뱃지를 엽록체 공장으로 1세트(각 1개)씩 모아보세요!<br>
+        <span style="display: inline-block; margin-left: 10px;">녹말을 2개 만들면 퀴즈가 나타납니다.</span><br>
+        • 포도당 5개가 모이면 녹말 1개로 변환됩니다.<br>
+        • 실제로는 수많은 포도당이 모여 녹말이 됩니다.
+      </p>
+
+      <div class="badge-pool m4-badge-pool dropzone" id="pool1" style="max-height: 140px; overflow-y: auto;"></div>
+      <div class="dropzone m4-dropzone multi-dropzone" id="dz-leaf" style="width: 100%; max-width: 500px; min-height: 180px; margin: 0 auto; background: #e8f5e9; border: 4px dashed #66bb6a; border-radius: 50px; position: relative; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: center; padding: 40px 15px 15px;">
+         <div style="width:100%; text-align:center; color:#2e7d32; font-weight:bold; position:absolute; pointer-events:none; z-index:0; top: 15px; font-size: 1.1rem;">🌿 엽록체 공장</div>
+      </div>
+      
+      <div id="step1-quiz-area" style="display: none; margin-top: 20px; background: #f1f8e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; text-align: center;">
+        <h4 style="color: #2e7d32; margin-top: 0;">📝 광합성 산물 퀴즈</h4>
+        <p style="margin:0 0 10px 0; font-size: 1.05rem; line-height: 1.6; color:#37474f;">
+          Q. 광합성 결과 최초로 만들어진 양분인 포도당은 바로 물에 녹지 않는 양분인 <strong>무엇</strong>으로 바뀌어 엽록체에 저장되는가?
+        </p>
+        <input type="text" id="q1-inline-input" class="organelle-input" placeholder="정답 입력" style="margin-bottom: 15px; max-width: 300px;">
+        <button id="btn-check-inline-quiz" class="btn-action" onclick="checkStep1QuizInline()" style="margin-top: 0;">정답 확인</button>
+      </div>
+
+      <p id="step1-msg" class="success-text" style="display: none;"></p>
+      <button id="btn-next-2" class="btn-action" onclick="if(typeof launchConfetti === 'function') launchConfetti(); setTimeout(() => { goM4Step(2); }, 800);" style="background:#f57f17; display: none;">Step 2 가기 ➔</button>
+    </div>
+
+    <!-- STEP 2 (밤) -->
+    <div id="step2-box" class="interactive-box night-box" style="display: none;">
+      <h3>STEP 2. 양분의 이동 (밤)</h3>
+      <div id="step2-intro" style="background: #1c2529; border: 1px solid #455a64; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 20px; animation: fadeIn 1s ease-in-out;">
+        <img src="images/M4_s02_VascularBundle_2.png" alt="양분의 이동 힌트" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+        <div style="font-size: 1.25rem; line-height: 1.8; color: #fff9c4 !important; font-weight: bold; word-break: keep-all; margin-bottom: 25px;">
+          엽록체에 저장된 녹말은 주로 밤에 물에 잘 녹는 <span style="color:#81d4fa !important;">설탕</span>으로 바뀌어<br>체관을 따라 꽃, 열매, 뿌리 줄기 등으로 이동한다.
+        </div>
+        <button class="btn-action" onclick="startStep2Interactive()" style="background:#1e88e5; border: 1px solid #64b5f6; display: inline-block;">계속 ➔</button>
+      </div>
+
+      <div id="step2-interactive" style="display: none; margin-top: 20px;">
+        <p style="color: #b0bec5 !important; margin-bottom: 20px; text-align: center; font-size: 1.1rem;">
+          &lt;양분과 물을 <strong>세포질</strong>로 보낸 후 다시 각각 이동 경로로 보내세요&gt;
+        </p>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: stretch;">
+          <div style="flex: 1; width: calc(50% - 10px); min-width: 280px; background: #37474f; border-radius: 12px; padding: 20px; border: 1px solid #546e7a; display: flex; flex-direction: column;">
+            <h4 style="color:#aed581; margin-top:0; text-align:center;">🌿 엽록체</h4>
+            <div class="badge-pool m4-badge-pool dropzone" id="pool2" style="background:#263238; border:1px solid #455a64; min-height:80px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
+              <div class="badge m4-badge" data-type="starch" draggable="true" tabindex="0" role="button" style="touch-action: none;">🥔 녹말</div>
+              <div class="badge m4-badge" data-type="water" draggable="true" tabindex="0" role="button" style="touch-action: none;">💧 물</div>
+            </div>
+            <h4 style="color:#ffcc80; margin-top:20px; text-align:center;">세포질</h4>
+            <div class="dropzone m4-dropzone multi-dropzone" id="dz-cytoplasm" style="flex: 1; width: 100%; min-height: 180px; background: #455a64; border: 3px dashed #ffb74d; border-radius: 12px; padding:15px; display:flex; flex-wrap:wrap; gap:8px; align-content: flex-start;"></div>
+          </div>
+          
+          <div style="flex: 1; width: calc(50% - 10px); min-width: 280px; position: relative; background: url('images/M4_s02_VascularBundle.png') no-repeat center/contain, #263238; border-radius: 12px; min-height: 400px; overflow: hidden; border: 1px solid #78909c;">
+             <div class="dropzone m4-dropzone" id="dz-xylem-1" style="position: absolute; top: 42%; left: 11%; transform: translate(-50%, -50%); border: 2px dashed #64b5f6; min-width: 70px; min-height: 40px; border-radius: 8px;"></div>
+             <div class="dropzone m4-dropzone" id="dz-xylem-2" style="position: absolute; top: 66%; left: 30%; transform: translate(-50%, -50%); border: 2px dashed #64b5f6; min-width: 70px; min-height: 40px; border-radius: 8px;"></div>
+             <div class="dropzone m4-dropzone" id="dz-phloem-1" style="position: absolute; top: 36%; left: 30%; transform: translate(-50%, -50%); border: 2px dashed #ffb74d; min-width: 70px; min-height: 40px; border-radius: 8px;"></div>
+             <div class="dropzone m4-dropzone" id="dz-phloem-2" style="position: absolute; top: 57%; left: 48%; transform: translate(-50%, -50%); border: 2px dashed #ffb74d; min-width: 70px; min-height: 40px; border-radius: 8px;"></div>
+          </div>   
+        </div>
+      </div>
+
+      <div id="step2-success-msg" style="display: none; margin-top: 20px; background: rgba(46,125,50,0.4); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #81c784; animation: fadeIn 0.5s;">
+        <p style="color: #c8e6c9 !important; font-size: 1.15rem; font-weight: bold; margin: 0;">🌱 설탕이 체관을 따라 뿌리, 줄기, 꽃, 열매 등으로 이동합니다.</p>
+      </div>
+      
+      <div id="step2-quiz-area" style="display: none; margin-top: 20px; background: #37474f; padding: 25px; border-radius: 12px; border: 1px solid #64b5f6; text-align: left; animation: fadeIn 0.5s;">
+        <h4 style="color: #fff9c4; margin-top: 0; font-size: 1.2rem; text-align: center;">📝 이동 경로 퀴즈</h4>
+        
+        <div style="margin-bottom: 20px;">
+          <p style="margin:0 0 8px 0; font-size: 1.1rem; line-height: 1.6; color:#e0e0e0 !important;">
+            <strong style="color:#81d4fa;">Q1.</strong> 엽록체에 임시 저장되었던 녹말이 식물의 각 기관으로 이동할 때 어떤 양분으로 바뀌는가?
+          </p>
+          <input type="text" id="q2-input-1" class="organelle-input" placeholder="정답 입력" style="width: 100%; max-width: 400px; background:#263238; color:#fff; border-color:#546e7a;">
+        </div>
+        
+        <div style="margin-bottom: 25px;">
+          <p style="margin:0 0 8px 0; font-size: 1.1rem; line-height: 1.6; color:#e0e0e0 !important;">
+            <strong style="color:#ffb74d;">Q2.</strong> Q1의 양분으로 바뀐 후 줄기의 무엇을 따라 이동하는가?
+          </p>
+          <input type="text" id="q2-input-2" class="organelle-input" placeholder="정답 입력" style="width: 100%; max-width: 400px; background:#263238; color:#fff; border-color:#546e7a;">
+        </div>
+
+        <!-- 💡 새로 추가된 Q3 영역 -->
+        <div style="margin-bottom: 25px;">
+          <p style="margin:0 0 8px 0; font-size: 1.1rem; line-height: 1.6; color:#e0e0e0 !important;">
+            <strong style="color:#aed581;">Q3.</strong> 광합성 결과 생긴 산소는 낮에 식물 자체의 호흡에 사용하다 남은 것은 잎의 어느 부분을 통해 식물 밖으로 나가는가?
+          </p>
+          <input type="text" id="q2-input-3" class="organelle-input" placeholder="정답 입력" style="width: 100%; max-width: 400px; background:#263238; color:#fff; border-color:#546e7a;">
+        </div>
+
+        <button id="btn-check-step2-quiz" class="btn-action" onclick="checkStep2Quiz()" style="background:#1e88e5; margin:0 auto; display: block;">정답 확인</button>
+      </div>
+      <button id="btn-next-3" class="btn-action" onclick="if(typeof launchConfetti === 'function') launchConfetti(); setTimeout(() => { goM4Step(3); }, 800);" style="background:#f57f17; display: none;">Step 3 가기 ➔</button>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="step3-box" class="interactive-box" style="display: none;">
+      <h3>STEP 3. 양분의 이동과 이용</h3>
+      <div id="s3-review-area" style="background: #f1f8e9; padding: 25px; border-radius: 12px; border: 1px solid #c8e6c9; margin-bottom:25px; text-align: center;">
+        <h4 style="color:#2e7d32; margin-top:0; font-size: 1.3rem;">📝 Q.</h4>
+        <p style="font-size:1.1rem; line-height:1.8; color:#37474f; word-break: keep-all;">
+          낮에 엽록체에 임시 저장된 녹말은 밤이 되면 
+          <input type="text" id="s3-q1" class="organelle-input" style="width:90px; text-align:center; display:inline-block; margin: 0 5px; padding:8px;">(으)로 변하여 줄기의 
+          <input type="text" id="s3-q2" class="organelle-input" style="width:90px; text-align:center; display:inline-block; margin: 0 5px; padding:8px;">을(를) 따라 뿌리, 줄기, 꽃, 열매 등 식물의 각 기관으로 이동해요.
+        </p>
+        <button id="btn-s3-review" class="btn-action" onclick="checkS3Review()">정답 확인</button>
+        <button id="btn-s3-start-main" class="btn-action" style="display:none; background:#1e88e5;" onclick="startS3Main()">계속 ➔</button>
+      </div>
+
+      <div id="s3-main-area" style="display:none; gap:20px; flex-wrap:wrap; align-items: stretch;">
+        <div style="flex:1; width: calc(50% - 10px); min-width:280px; background:#f1f8e9; border-radius:12px; padding:25px; border:1px solid #c5e1a5; box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);">
+          <h4 style="color:#1b5e20; margin-top:0; border-bottom: 2px solid #dcedc8; padding-bottom: 10px;">식물이 합성한 양분은 어떻게 이용될까요?</h4>
+          <div id="s3-q-container">
+             <div class="s3-question-block" id="s3-qb-1">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.15rem; margin-bottom: 8px;">Q1. 생명 유지</p>
+                 <p style="color:#33691e; margin-top: 0; font-size: 1.05rem;">식물이 살아가는 데 필요한 에너지를 내는 과정은?</p>
+                 <input type="text" id="s3-ans-1" class="organelle-input" placeholder="정답 입력 (예: 호흡)">
+                 <button id="s3-btn-check-1" class="btn-action" style="margin-top:15px; width: 100%;" onclick="checkS3Answer(1, '호흡')">정답 확인</button>
+                 <button id="s3-next-1" class="btn-action" style="display:none; margin-top:15px; background:#f57f17; width: 100%;" onclick="growPlant(1)">계속 ➔</button>
+             </div>
+             <div class="s3-question-block" id="s3-qb-2" style="display:none;">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.15rem; margin-bottom: 8px;">Q2. 몸의 구성성분</p>
+                 <p style="color:#33691e; margin-top: 0; font-size: 1.05rem;">새로운 잎과 줄기를 만들어 몸집을 키우는 과정은?</p>
+                 <input type="text" id="s3-ans-2" class="organelle-input" placeholder="정답 입력 (예: 생장)">
+                 <button id="s3-btn-check-2" class="btn-action" style="margin-top:15px; width: 100%;" onclick="checkS3Answer(2, '생장')">정답 확인</button>
+                 <button id="s3-next-2" class="btn-action" style="display:none; margin-top:15px; background:#f57f17; width: 100%;" onclick="growPlant(2)">계속 ➔</button>
+             </div>
+             <div class="s3-question-block" id="s3-qb-3" style="display:none;">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.15rem; margin-bottom: 8px;">Q3. 꽃과 열매</p>
+                 <p style="color:#33691e; margin-top: 0; font-size: 1.05rem;">자손을 남기기 위해 씨앗(열매)을 맺는 과정은?</p>
+                 <input type="text" id="s3-ans-3" class="organelle-input" placeholder="정답 입력 (예: 번식)">
+                 <button id="s3-btn-check-3" class="btn-action" style="margin-top:15px; width: 100%;" onclick="checkS3Answer(3, '번식')">정답 확인</button>
+                 <button id="s3-next-3" class="btn-action" style="display:none; margin-top:15px; background:#f57f17; width: 100%;" onclick="growPlant(3)">계속 ➔</button>
+             </div>
+             <div class="s3-question-block" id="s3-qb-4" style="display:none;">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.15rem; margin-bottom: 8px;">Q4. 저장</p>
+                 <p style="color:#33691e; margin-top: 0; font-size: 1.05rem;">뿌리, 줄기, 열매, 씨 등에 나중을 위해 모아 두는 것은?</p>
+                 <input type="text" id="s3-ans-4" class="organelle-input" placeholder="정답 입력 (예: 저장)">
+                 <button id="s3-btn-check-4" class="btn-action" style="margin-top:15px; width: 100%;" onclick="checkS3Answer(4, '저장')">정답 확인</button>
+                 <button id="s3-next-4" class="btn-action" style="display:none; margin-top:15px; background:#f57f17; width: 100%;" onclick="growPlant(4)">계속 ➔</button>
+             </div>
+             <div class="s3-question-block" id="s3-qb-5" style="display:none;">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.15rem; margin-bottom: 8px;">Q5. 동물의 먹이</p>
+                 <p style="color:#33691e; margin-top: 0; font-size: 1.05rem;">식물에 저장된 양분은 초식/육식 동물의 무엇이 되나요?</p>
+                 <input type="text" id="s3-ans-5" class="organelle-input" placeholder="정답 입력 (예: 먹이)">
+                 <button id="s3-btn-check-5" class="btn-action" style="margin-top:15px; width: 100%;" onclick="checkS3Answer(5, '먹이')">정답 확인</button>
+                 <button id="s3-next-5" class="btn-action" style="display:none; margin-top:15px; background:#f57f17; width: 100%;" onclick="growPlant(5)">수확하기 ➔</button>
+             </div>
+             
+             <div class="s3-question-block" id="s3-harvest-result" style="display:none; text-align:center;">
+                 <p style="color:#e65100; font-weight:bold; font-size: 1.5rem; margin-bottom: 20px;">🎉 수확하였습니다!</p>
+                 <button class="btn-action" style="background:#1e88e5; width: 100%;" onclick="showS3FinalQuiz()">계속 ➔</button>
+             </div>
+
+             <div class="s3-question-block" id="s3-final-quiz-area" style="display:none;">
+                 <h4 style="color:#1b5e20; border-bottom: 2px solid #dcedc8; padding-bottom: 8px; margin-top: 0;">최종 복습 퀴즈</h4>
+                 <p style="line-height:1.9; font-size:1.05rem; word-break:keep-all; color:#37474f;">
+                    식물이 광합성 작용으로 합성한 양분은 식물의 자체의 
+                    (<input type="text" id="s3-fq-1" class="organelle-input" style="width:70px; padding:5px; text-align:center; display:inline-block; margin:0 3px;">), 
+                    (<input type="text" id="s3-fq-2" class="organelle-input" style="width:70px; padding:5px; text-align:center; display:inline-block; margin:0 3px;">), 
+                    (<input type="text" id="s3-fq-3" class="organelle-input" style="width:70px; padding:5px; text-align:center; display:inline-block; margin:0 3px;">)에 사용되고 남은 것은 다양한 형태로 저장된다.<br>
+                    뿌리, 줄기, 열매, 씨 등에 
+                    (<input type="text" id="s3-fq-4" class="organelle-input" style="width:70px; padding:5px; text-align:center; display:inline-block; margin:0 3px;">)된 양분을 동물이 먹어서 동물이 자란다.
+                 </p>
+                 <button id="btn-check-s3-final" class="btn-action" style="width:100%; margin-top:15px;" onclick="checkS3FinalQuiz()">정답 확인</button>
+             </div>
+          </div>
+        </div>
+        
+        <div style="flex:1; width: calc(50% - 10px); min-width:280px; background:linear-gradient(to bottom, #e1f5fe 0%, #b3e5fc 70%, #dcedc8 100%); border-radius:12px; border:3px solid #81c784; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:20px; position:relative; min-height:350px; overflow:hidden;">
+            <div id="plant-stage" style="font-size:5rem; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), font-size 0.6s ease, text-shadow 0.6s; transform-origin: bottom center; margin-bottom: -15px; z-index: 10;">🌱</div>
+            <div style="width: 120px; height: 30px; background: #795548; border-radius: 50%; margin-top: -10px; z-index: 0; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.3);"></div>
+            
+            <div id="harvest-modal" style="display:none; position:absolute; top:40%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.85); color:white; padding:20px 30px; border-radius:12px; text-align:center; width:85%; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+               <p style="font-size:1.3rem; margin-bottom:20px; font-weight: bold;">과실이 무르익었습니다!<br>수확하시겠습니까?</p>
+               <div style="display:flex; gap:15px; justify-content:center;">
+                  <button class="btn-action" style="margin:0; background:#66bb6a; min-width: 80px;" onclick="harvestPlant(true)">예</button>
+                  <button class="btn-action" style="margin:0; background:#e53935; min-width: 80px;" onclick="harvestPlant(false)">아니오</button>
+               </div>
+            </div>
+        </div>
+      </div>
+      
+      <p id="step3-msg" class="success-text" style="display: none;"></p>
+      <button id="btn-next-4" class="btn-action" onclick="if(typeof launchConfetti === 'function') launchConfetti(); setTimeout(() => { goM4Step(4); }, 800);" style="background:#f57f17; display: none; width:100%; max-width: 400px;">Step 4 가기 ➔</button>
+      
+    </div>
+
+    <!-- 💡 개편된 STEP 4 (1:2.2 비율, 황금 테두리, 검은 글씨 적용) -->
+    <div id="step4-box" class="interactive-box" style="display: none;">
+      <h3>STEP 4. 햇빛 금고 대정리</h3>
+      <p style="color: #546e7a; margin-bottom: 15px;">
+         창고에 수확한 식물들이 무질서하게 쌓여있습니다. 금고에 <strong>영양소</strong>와 <strong>저장기관</strong>을 기준으로 분류하여 정리하세요. 같은 종은 한 곳에 중복해서 넣을 수 없습니다.
+      </p>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; margin-top: 20px;">
+        <!-- 좌측 1 (창고) -->
+        <div style="flex: 1; min-width: 180px; background: #e8f5e9; border-radius: 12px; padding: 15px; border: 2px dashed #81c784; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);">
+          <h4 style="color:#2e7d32; margin-top:0; text-align:center;">📦 창고</h4>
+          <div id="s4-pool" class="m4-badge-pool dropzone" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 200px;">
+             <!-- 랜덤 뱃지 자동 생성 -->
+          </div>
+        </div>
+
+        <!-- 우측 2.2 (황금 햇빛 금고) -->
+        <div style="flex: 2.2; min-width: 360px;">
+          <div id="step4-vault">
+            <div class="s4-header" style="grid-column: 1 / 4;">영양소</div>
+            
+            <div class="dropzone m4-dropzone s4-slot" data-accept="수박,사탕수수"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="수박,사탕수수"></div>
+            <div class="s4-label">당류</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="감자,고구마"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="감자,고구마"></div>
+            <div class="s4-label">녹말</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="콩,참깨"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="콩,참깨"></div>
+            <div class="s4-label">지방</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="콩,땅콩"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="콩,땅콩"></div>
+            <div class="s4-label">단백질</div>
+
+            <div class="s4-header" style="grid-column: 1 / 4; margin-top: 10px;">저장기관</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="수박" data-capacity="1"></div>
+            <div class="s4-blocked"></div>
+            <div class="s4-label">열매</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="땅콩,참깨"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="땅콩,참깨"></div>
+            <div class="s4-label">씨</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="사탕수수,감자"></div>
+            <div class="dropzone m4-dropzone s4-slot" data-accept="사탕수수,감자"></div>
+            <div class="s4-label">줄기</div>
+
+            <div class="dropzone m4-dropzone s4-slot" data-accept="고구마" data-capacity="1"></div>
+            <div class="s4-blocked"></div>
+            <div class="s4-label">뿌리</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="s4-vault-done" style="display: none; margin-top: 25px; animation: fadeIn 0.5s;">
+        <div style="background: rgba(46,125,50,0.15); padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #81c784; margin-bottom: 20px;">
+            <p style="color: #2e7d32; font-size: 1.3rem; font-weight: bold; margin: 0;">✨ 햇빛 금고가 가득찼습니다!</p>
+        </div>
+        
+        <div style="background: #fff3e0; padding: 20px; border-radius: 12px; border: 2px dashed #ffb74d; text-align: left; margin-bottom: 20px;">
+            <h4 style="color: #e65100; margin-top: 0; font-size: 1.2rem;">📖 재미있는 식물 이야기 (땅콩, 감자, 고구마)</h4>
+            <p style="color: #4e342e; font-size: 1.05rem; line-height: 1.6; word-break: keep-all; margin: 0;">
+                우리가 먹는 부위가 모두 땅 속에서 자라지만 양분이 저장된 곳은 달라요.!<br>
+                <strong>땅콩</strong>은 꽃이 진 후 땅속으로 파고들어가 열매를 맺어요.<br>
+                <strong>감자</strong>는 줄기가 굵어져서 감자가 돼요.<br>
+                <strong>고구마</strong>는 뿌리가 굵어져서 고구마가 돼요.<br>
+                <strong>양파</strong>는 잎이 굵어져서 된거랍니다. 세상에나!!
+            </p>
+        </div>
+
+        <button class="btn-action" style="background:#1e88e5; margin:0 auto;" onclick="startS4LineQuiz()">계속 ➔</button>
+      </div>
+
+      <div id="s4-quiz-area" style="display:none; margin-top:30px; animation: fadeIn 0.5s;">
+        <h4 style="color:#1b5e20; border-bottom: 2px solid #dcedc8; padding-bottom: 10px; margin-top: 0; font-size:1.2rem;">📝 Q. 양분을 주로 저장하는 기관을 서로 알맞게 짝지으시오.</h4>
+        <p style="font-size:0.95rem; color:#546e7a; margin-top:-5px;">(왼쪽이나 오른쪽의 식물 사진을 먼저 누르고, 가운데 저장 기관을 누르면 선이 연결됩니다.)</p>
+        
+        <div class="line-quiz-container" id="line-container">
+            <svg id="line-svg"></svg>
+            
+            <div class="line-col" id="line-col-left">
+                <div class="plant-img" id="l-radish" onclick="selectLineItem('l-radish')"><img src="images/M4_s04_p01.png" alt="무" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909808.png'"></div>
+                <div class="plant-img" id="l-cabbage" onclick="selectLineItem('l-cabbage')"><img src="images/M4_s04_p02.png" alt="배추" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3790/3790938.png'"></div>
+                <div class="plant-img" id="l-tangerine" onclick="selectLineItem('l-tangerine')"><img src="images/M4_s04_p03.png" alt="귤" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1155/1155099.png'"></div>
+                <div class="plant-img" id="l-sweetpotato" onclick="selectLineItem('l-sweetpotato')"><img src="images/M4_s04_p04.png" alt="고구마" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2850/2850730.png'"></div>
+                <div class="plant-img" id="l-potato" onclick="selectLineItem('l-potato')"><img src="images/M4_s04_p05.png" alt="감자" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2079/2079374.png'"></div>
+            </div>
+
+            <div class="line-col-center" id="line-col-center">
+                <div class="center-target" id="c-root" onclick="selectLineTarget('c-root')">뿌리</div>
+                <div class="center-target" id="c-stem" onclick="selectLineTarget('c-stem')">줄기</div>
+                <div class="center-target" id="c-leaf" onclick="selectLineTarget('c-leaf')">잎</div>
+                <div class="center-target" id="c-seed" onclick="selectLineTarget('c-seed')">씨</div>
+                <div class="center-target" id="c-fruit" onclick="selectLineTarget('c-fruit')">열매</div>
+            </div>
+
+            <div class="line-col" id="line-col-right" style="align-items: flex-end;">
+                <div class="plant-img" id="r-sugarcane" onclick="selectLineItem('r-sugarcane')"><img src="images/M4_s04_p06.png" alt="사탕수수" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909825.png'"></div>
+                <div class="plant-img" id="r-bean" onclick="selectLineItem('r-bean')"><img src="images/M4_s04_p07.png" alt="콩" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3593/3593685.png'"></div>
+                <div class="plant-img" id="r-peanut" onclick="selectLineItem('r-peanut')"><img src="images/M4_s04_p08.png" alt="땅콩" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1202/1202058.png'"></div>
+                <div class="plant-img" id="r-watermelon" onclick="selectLineItem('r-watermelon')"><img src="images/M4_s04_p09.png" alt="수박" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909772.png'"></div>
+                <div class="plant-img" id="r-onion" onclick="selectLineItem('r-onion')"><img src="images/M4_s04_p10.png" alt="양파" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2909/2909819.png'"></div>
+            </div>
+
+        </div>
+        <button id="btn-check-s4-line" class="btn-action" style="width: 100%; max-width: 400px; margin-top:20px;" onclick="checkS4LineQuiz()">정답 확인</button>
+      </div>
+
+      <!-- 💡 식물 연구 박사 엔딩 영역 (이미지 추가 완료!) -->
+      <div id="s4-ending-area" style="display:none; margin-top: 30px; text-align: center; animation: fadeIn 1s;">
+         <div style="background: #fff9c4; padding: 40px 30px; border-radius: 16px; border: 4px solid #fbc02d; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+             <p style="font-size: 2.5rem; margin:0 0 10px 0;">🎉</p>
+             <h3 style="color:#f57f17; font-size: 2.4rem; margin:0 0 15px 0;">모든 생명의 근원<br> 당신은 식물 연구 박사로 승격하셨습니다!</h3>
+             <img src="images/M4_s04_end_01.png" alt="식물연구 박사" style="max-width: 100%; max-height: 250px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2850/2850730.png'">
+             
+             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                 <button class="btn-action" style="margin:0; background:#cfd8dc; color:#333; font-size: 1.1rem; padding: 14px 30px;" onclick="location.href='index.html'">식물연구소 돌아가기</button>
+                 <button class="btn-action" style="margin:0; background:#f57f17; font-size: 1.1rem; padding: 14px 30px;" onclick="location.href='hidden.html'">히든프로젝트 가기 ➔</button>
+             </div>
+         </div>
+      </div>
+</main>
+<canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; z-index: 9999;"></canvas>
+
+</body>
+</html>

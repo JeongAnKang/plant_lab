@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>히든 프로젝트: 지구의 역사</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* CSS 애니메이션 정의 */
+    @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 1; } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
+    @keyframes floatUpFast { 0% { transform: translateY(100vh) scale(0.5); opacity: 1; } 100% { transform: translateY(-20vh) scale(2); opacity: 0.2; } }
+    @keyframes rainFall { 0% { transform: translateY(-50px); } 100% { transform: translateY(100vh); } }
+    @keyframes frogJump {
+        0% { left: 10%; transform: translateY(0) rotate(0deg); }
+        15% { left: 18%; transform: translateY(-100px) rotate(-15deg); }
+        30% { left: 25%; transform: translateY(0) rotate(0deg); }
+        45% { left: 33%; transform: translateY(-100px) rotate(-15deg); }
+        60% { left: 40%; transform: translateY(0) rotate(0deg); }
+        75% { opacity: 1; } 100% { left: 40%; opacity: 0; }
+    }
+    @keyframes popExplode {
+        0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+        50% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+    }
+    @keyframes pulseGlow {
+        0% { filter: drop-shadow(0 0 5px cyan); }
+        50% { filter: drop-shadow(0 0 30px cyan); }
+        100% { filter: drop-shadow(0 0 5px cyan); }
+    }
+    @keyframes floatO3 {
+        0%, 100% { transform: translate(-45px, -10px); }
+        50% { transform: translate(45px, 10px); }
+    }
+    @keyframes slideDownIn {
+        from { transform: translateY(-100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="m-0 overflow-hidden touch-none select-none" style="background: linear-gradient(135deg, #1a3c23 0%, #3a5a40 100%);">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const slideImages = {
+        epic: [
+            'images/m5_s8_1.jpg',
+            'images/m5_s8_2.jpg',
+            'images/m5_s9_1.jpg',
+            'images/m5_s9_2.jpg',
+            'images/m5_s9_3.jpg'
+        ]
+    };
+    Object.values(slideImages).flat().forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+
+    function HiddenProject() {
+      const [stage, setStage] = useState(1);
+      const [rewardMessage, setRewardMessage] = useState(null);
+      const [rewardTokenCount, setRewardTokenCount] = useState(0);
+
+      const maxStage = 8;
+      const nextStage = () => setStage((p) => Math.min(p + 1, maxStage));
+      const prevStage = () => setStage((p) => Math.max(p - 1, 1));
+
+      // 💡 보상 획득 후 식물연구소(index.html)로 자동 이동하는 로직 추가
+      const claimHiddenReward = () => {
+        const hasVisited = localStorage.getItem('hidden_project_visited') === 'true';
+        const currentTokenCount = parseInt(localStorage.getItem('reward_count') || '0', 10);
+
+        if (!hasVisited) {
+          const newTokenCount = currentTokenCount + 1;
+          localStorage.setItem('reward_count', newTokenCount.toString());
+          localStorage.setItem('hidden_project_visited', 'true');
+          setRewardTokenCount(newTokenCount);
+          setRewardMessage({ text: '✨ 히든 보상 1회 획득! 메인 화면으로 이동합니다.', type: 'success' });
+          setTimeout(() => { window.location.href = 'index.html'; }, 2500); 
+        } else {
+          setRewardTokenCount(currentTokenCount);
+          setRewardMessage({ text: '이미 히든 보상을 받았습니다. 메인 화면으로 이동합니다.', type: 'info' });
+          setTimeout(() => { window.location.href = 'index.html'; }, 2000); 
+        }
+      };
+
+      const stageTitles = [
+        "마그마의 바다 (약 45억년 전)", 
+        "지각 응고", 
+        "원시 바다 (약 40억~43억년 전)", 
+        "산소 혁명 (약 24.5억년 전)", 
+        "세포 내 공생 (약 10억~20억년 전)", 
+        "오존층 형성 (약 4.2억년 전)", 
+        "육상 진출 (약 4.7~3.6억년 전)", 
+        "생명과 멸종의 서사시"
+      ];
+
+      return (
+        <div className="relative w-full h-screen text-white font-sans">
+          
+          <a href="index.html" className="absolute top-6 left-6 z-50 bg-white/20 hover:bg-white/40 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold no-underline text-white shadow-md flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            식물 연구소로 돌아가기
+          </a>
+
+          {rewardMessage && (
+            <div className={`fixed top-20 right-6 z-50 p-4 rounded-xl shadow-xl backdrop-blur-md text-sm font-bold animate-slideDownIn ${rewardMessage.type === 'success' ? 'bg-orange-500/90' : 'bg-slate-700/90'}`}>
+              <div className="flex items-center gap-2">
+                {rewardMessage.type === 'success' && <span className="text-2xl">⭐</span>}
+                <div>
+                  <p className="text-lg">{rewardMessage.text}</p>
+                  <p className="text-xs opacity-80 font-normal mt-0.5">현재 총 보상 토큰: {rewardTokenCount}개 / 20개</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="absolute inset-0 w-full h-full">
+            {stage === 1 && <Stage1Magma />}
+            {stage === 2 && <Stage2Crust />}
+            {stage === 3 && <Stage3Ocean />}
+            {stage === 4 && <Stage4Oxygen />}
+            {stage === 5 && <Stage5Symbiosis />}
+            {stage === 6 && <Stage6Ozone />}
+            {stage === 7 && <Stage7Cambrian />}
+            {stage === 8 && <Stage8Epic onPurifyComplete={claimHiddenReward} />}
+          </div>
+
+          <div className="absolute top-6 w-full text-center z-40 pointer-events-none drop-shadow-md">
+            <p className="text-xl text-green-300 font-bold mb-1">히든 프로젝트: 지구의 역사</p>
+            <h1 className="text-3xl font-extrabold">{stage}. {stageTitles[stage - 1]}</h1>
+          </div>
+
+          <div className="absolute bottom-8 w-full flex justify-center gap-8 z-50">
+            <button onClick={prevStage} disabled={stage === 1} className="px-6 py-3 bg-white/20 rounded-full backdrop-blur-md disabled:opacity-30 text-lg font-bold shadow-lg">이전 시대</button>
+            <button onClick={nextStage} disabled={stage === maxStage} className="px-6 py-3 bg-green-500 rounded-full shadow-lg shadow-green-500/50 disabled:opacity-30 text-lg font-bold">다음 시대</button>
+          </div>
+        </div>
+      );
+    }
+
+    // 1. 마그마 바다
+    function Stage1Magma() {
+      const [pops, setPops] = useState([]);
+      const [bubbles] = useState(() => Array.from({ length: 30 }).map((_, i) => ({
+        id: i, left: Math.random() * 100, delay: Math.random() * 5, dur: 2 + Math.random() * 3, size: 25 + Math.random() * 45
+      })));
+
+      const popBubble = (e) => {
+        e.stopPropagation();
+        setPops(p => [...p, { id: Date.now() + Math.random(), x: e.clientX, y: e.clientY }]);
+        const target = e.target;
+        target.style.visibility = 'hidden';
+        setTimeout(() => { target.style.visibility = 'visible'; }, 2000);
+      };
+
+      return (
+        <div className="w-full h-full bg-red-900 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#450a0a] via-[#7f1d1d] to-[#dc2626] animate-pulse" />
+          {bubbles.map(b => (
+            <div key={b.id} onPointerDown={popBubble}
+                 className="absolute bottom-[-50px] bg-red-500/60 rounded-full shadow-[0_0_20px_#ff0000] cursor-pointer"
+                 style={{ left: `${b.left}%`, width: b.size, height: b.size, animation: `floatUp ${b.dur}s infinite ease-in ${b.delay}s` }} />
+          ))}
+          {pops.map(p => (
+            <div key={p.id} className="absolute text-[9rem] z-10 pointer-events-none drop-shadow-[0_0_10px_yellow]"
+                 style={{ left: p.x, top: p.y, transform: 'translate(-50%, -50%)', animation: 'popExplode 0.5s forwards' }}>💥</div>
+          ))}
+          <div className="absolute top-[40%] w-full text-center text-white/70 text-2xl animate-bounce pointer-events-none drop-shadow-lg">
+            수증기를 탭해서 터뜨려보세요!
+          </div>
+        </div>
+      );
+    }
+
+    // 2. 지각 응고
+    function Stage2Crust() {
+      const [rocks, setRocks] = useState([]);
+      
+      const handlePointerEvent = (e) => {
+        if (e.buttons > 0 || e.type === 'pointerdown') {
+          setRocks(prev => {
+              const newRocks = [...prev, { id: Math.random(), x: e.clientX, y: e.clientY }];
+              return newRocks.slice(-200); 
+          });
+        }
+      };
+
+      return (
+        <div className="w-full h-full cursor-pointer relative overflow-hidden" 
+             onPointerDown={handlePointerEvent} onPointerMove={handlePointerEvent}>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#450a0a] via-[#7f1d1d] to-[#dc2626] animate-pulse" />
+          {rocks.map(r => (
+            <div key={r.id} className="absolute bg-[#1a1a1a] rounded-full blur-[2px] shadow-[inset_0_0_10px_#000]" 
+                 style={{ left: r.x - 40, top: r.y - 40, width: '80px', height: '80px' }} />
+          ))}
+          <p className="absolute top-1/2 w-full text-center text-white/70 pointer-events-none text-xl bg-black/30 py-2">
+             화면을 탭하거나 문질러 지각을 검게 식히세요
+          </p>
+        </div>
+      );
+    }
+
+    // 3. 원시 바다
+    function Stage3Ocean() {
+      const [lightning, setLightning] = useState(false);
+      const [rainDrops] = useState(() => Array.from({ length: 60 }).map((_, i) => ({
+        id: i, left: Math.random() * 100, delay: Math.random() * 1, dur: 0.4 + Math.random() * 0.4
+      })));
+
+      const triggerLightning = () => {
+        if(lightning) return;
+        setLightning(true); setTimeout(() => setLightning(false), 100);
+        setTimeout(() => { setLightning(true); setTimeout(() => setLightning(false), 200); }, 200);
+      };
+
+      return (
+        <div className={`w-full h-full relative overflow-hidden transition-colors duration-75 ${lightning ? 'bg-white' : 'bg-gray-800'}`}>
+          <div className="absolute top-20 w-full flex justify-around text-7xl md:text-8xl z-20 cursor-pointer active:scale-95 transition-transform" onPointerDown={triggerLightning}>☁️ ⛈️ ☁️</div>
+          {lightning && <div className="absolute inset-0 bg-white/70 z-10 pointer-events-none mix-blend-overlay" />}
+          {rainDrops.map(r => (
+            <div key={r.id} className="absolute top-0 w-[2px] bg-white/40 h-10 pointer-events-none" style={{ left: `${r.left}%`, animation: `rainFall ${r.dur}s linear infinite ${r.delay}s` }} />
+          ))}
+          <div className="absolute bottom-0 w-full h-1/2 bg-blue-900/80 z-0 pointer-events-none" />
+          <p className="absolute top-[40%] w-full text-center text-white/60 pointer-events-none z-10 text-xl font-bold">구름을 터치하여 번개를 만들어보세요!</p>
+        </div>
+      );
+    }
+
+    // 4. 산소 혁명
+    function CloneStroma({ x, y, boost }) {
+      const [o2, setO2] = useState([]);
+      useEffect(() => {
+        const rate = boost ? 300 : 1000 + Math.random() * 1500;
+        const interval = setInterval(() => {
+          setO2(p => [...p, { id: Date.now() }]);
+          setTimeout(() => setO2(p => p.slice(1)), 1500);
+        }, rate);
+        return () => clearInterval(interval);
+      }, [boost]);
+
+      return (
+        <div className="absolute text-7xl" style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}>
+          🦠
+          {o2.map(b => (
+            <div key={b.id} className="absolute top-[-20px] left-1/2 -translate-x-1/2 text-cyan-200 font-bold text-xl"
+                 style={{ animation: 'floatUp 1.5s forwards ease-out', filter: 'drop-shadow(0 0 5px cyan)' }}>O₂</div>
+          ))}
+        </div>
+      );
+    }
+
+    function Stage4Oxygen() {
+      const [clones, setClones] = useState([]);
+      const [dragPos, setDragPos] = useState(null);
+      const [status, setStatus] = useState('normal');
+
+      const handleMove = (e) => { if (dragPos) setDragPos({ x: e.clientX, y: e.clientY }); };
+      const handleUp = (e) => {
+        if (dragPos && e.clientY > window.innerHeight * 0.4) {
+          setClones(p => {
+              const next = [...p, { id: Math.random(), x: e.clientX, y: e.clientY }];
+              if (next.length >= 10 && status === 'normal') {
+                  setStatus('gathering');
+              }
+              return next;
+          });
+        }
+        setDragPos(null);
+      };
+
+      useEffect(() => {
+          if (status === 'gathering') {
+              const timer = setTimeout(() => {
+                  setStatus('exploded');
+              }, 3000);
+              return () => clearTimeout(timer);
+          }
+      }, [status]);
+
+      const backgroundO2 = Array.from({ length: 150 }).map((_, i) => ({
+          id: i, left: Math.random() * 100, delay: Math.random() * 2, dur: 1 + Math.random() * 1.5
+      }));
+
+      return (
+        <div className={`w-full h-full relative overflow-hidden transition-colors duration-1000 ${status === 'exploded' ? 'bg-cyan-900' : 'bg-blue-900'}`} 
+             onPointerMove={handleMove} onPointerUp={handleUp}>
+          
+          <div className="absolute top-32 w-full text-center z-10 pointer-events-none text-white/90 text-lg drop-shadow-md font-bold">
+            {status === 'normal' && `시아노박테리아를 바다로 드래그 하여 10마리 이상 번식시키세요. (현재: ${clones.length}/10)`}
+            {status === 'gathering' && <span className="text-yellow-300 font-bold animate-pulse">산소가 모이고 있습니다...</span>}
+            {status === 'exploded' && <span className="text-cyan-300 font-extrabold text-3xl" style={{animation: 'pulseGlow 2s infinite'}}>대기 중 산소 농도 폭발! 산소 혁명 완료!</span>}
+          </div>
+          
+          <div className="absolute bottom-0 w-full h-[60%] bg-blue-950 border-t-2 border-blue-800" />
+          
+          {status === 'exploded' && backgroundO2.map(b => (
+              <div key={b.id} className="absolute text-cyan-200/50 font-bold text-4xl pointer-events-none"
+                   style={{ left: `${b.left}%`, animation: `floatUpFast ${b.dur}s infinite linear ${b.delay}s`}}>O₂</div>
+          ))}
+
+          {status !== 'exploded' && (
+              <div className="absolute top-[20%] left-1/2 -translate-x-1/2 text-7xl cursor-grab active:cursor-grabbing bg-green-500/20 rounded-full p-4 z-20"
+                   onPointerDown={(e) => setDragPos({ x: e.clientX, y: e.clientY })}>🦠</div>
+          )}
+          
+          {dragPos && <div className="absolute text-7xl opacity-50 pointer-events-none z-30" style={{ left: dragPos.x, top: dragPos.y, transform: 'translate(-50%, -50%)' }}>🦠</div>}
+          
+          {clones.map(c => <CloneStroma key={c.id} x={c.x} y={c.y} boost={status === 'exploded'} />)}
+        </div>
+      );
+    }
+
+    // 5. 세포 내 공생
+    function Stage5Symbiosis() {
+      const [items, setItems] = useState({ mito: false, chloro: false });
+      const [dragItem, setDragItem] = useState(null);
+      
+      const [pos, setPos] = useState({ 
+          mito: { x: window.innerWidth / 2 - 180, y: window.innerHeight / 2 + 80 }, 
+          chloro: { x: window.innerWidth / 2 + 180, y: window.innerHeight / 2 + 80 } 
+      });
+
+      const handleMove = (e) => { if (dragItem) setPos(p => ({ ...p, [dragItem]: { x: e.clientX, y: e.clientY } })); };
+      const handleUp = (e) => {
+        if (dragItem) {
+          if (Math.hypot(e.clientX - window.innerWidth/2, e.clientY - window.innerHeight/2) < 120) {
+            setItems(p => ({ ...p, [dragItem]: true }));
+          }
+          setDragItem(null);
+        }
+      };
+
+      return (
+        <div className="w-full h-full bg-teal-900 relative flex items-center justify-center overflow-hidden" onPointerMove={handleMove} onPointerUp={handleUp}>
+          <div className="absolute top-28 w-full text-center pointer-events-none px-4 z-10">
+            <p className="text-white/90 text-xl leading-relaxed">
+              <b className="font-extrabold text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">미토콘드리아</b>
+              (<span className="bg-white rounded-lg px-2 py-1 mx-1 shadow-md inline-block align-middle">🫘</span>)와{' '}
+              <b className="font-extrabold text-white text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">엽록체</b>
+              (<span className="bg-white rounded-lg px-2 py-1 mx-1 shadow-md inline-block align-middle">🟢</span>)를<br/>
+              거대 세포 안으로 넣으세요
+            </p>
+          </div>
+
+          <div className={`w-64 h-64 border-4 rounded-[40%_60%_70%_30%] flex items-center justify-center transition-all duration-700 relative
+            ${items.mito && items.chloro ? 'bg-green-500/80 border-green-300 shadow-[0_0_50px_#4ade80]' : 'bg-teal-800/50 border-teal-400'}`}>
+            <div className="w-16 h-16 bg-purple-500 rounded-full blur-sm absolute" />
+            {items.mito && <div className="text-6xl absolute top-10 left-10">🫘</div>}
+            {items.chloro && <div className="text-6xl absolute bottom-10 right-10">🟢</div>}
+          </div>
+          {!items.mito && <div className="absolute text-7xl cursor-grab active:cursor-grabbing bg-white/10 p-2 rounded-full" style={{ left: pos.mito.x, top: pos.mito.y, transform: 'translate(-50%,-50%)' }} onPointerDown={() => setDragItem('mito')}>🫘</div>}
+          {!items.chloro && <div className="absolute text-7xl cursor-grab active:cursor-grabbing bg-white/10 p-2 rounded-full" style={{ left: pos.chloro.x, top: pos.chloro.y, transform: 'translate(-50%,-50%)' }} onPointerDown={() => setDragItem('chloro')}>🟢</div>}
+        </div>
+      );
+    }
+
+    // 6. 오존층 형성
+    function Stage6Ozone() {
+      const particlesRef = useRef([]);
+      const draggingRef = useRef(null);
+      const [tick, setTick] = useState(0); 
+
+      useEffect(() => {
+        const init = [];
+        for(let i=0; i<5; i++) {
+          init.push({ type: 'o2', id: `target-${i}`, x: 10 + i * 20, y: 15 + Math.random() * 5, 
+                      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, o3: false, isTarget: true });
+        }
+        for(let i=0; i<10; i++) {
+          init.push({ type: 'o2', id: `dummy-${i}`, x: 10 + (i % 5) * 20 + (Math.random() * 8 - 4), y: 40 + Math.floor(i / 5) * 25 + (Math.random() * 10 - 5), 
+                      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, o3: false, isTarget: false });
+        }
+        for(let i=0; i<15; i++) {
+          init.push({ type: 'o', id: `o-${i}`, x: 10 + (i % 5) * 20 + (Math.random() * 10 - 5), y: 45 + Math.floor(i / 5) * 20 + (Math.random() * 10 - 5), 
+                      vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6 });
+        }
+        particlesRef.current = init;
+
+        const interval = setInterval(() => {
+            const pArr = particlesRef.current;
+            for (let i = 0; i < pArr.length; i++) {
+                let p1 = pArr[i];
+                if (p1.id === draggingRef.current || p1.o3) continue;
+
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+
+                if (p1.x < -10 || p1.x > 110 || p1.y < -10 || p1.y > 110) {
+                    p1.x = 20 + Math.random() * 60;
+                    p1.y = 20 + Math.random() * 60;
+                    p1.vx = (Math.random() - 0.5) * 0.6;
+                    p1.vy = (Math.random() - 0.5) * 0.6;
+                }
+
+                for (let j = i + 1; j < pArr.length; j++) {
+                    let p2 = pArr[j];
+                    if (p2.id === draggingRef.current || p2.o3) continue;
+
+                    let dx = p1.x - p2.x;
+                    let dy = (p1.y - p2.y) * 1.5; 
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    let radius = (p1.type === 'o2' ? 4 : 2.8) + (p2.type === 'o2' ? 4 : 2.8);
+
+                    if (dist < radius && dist > 0) {
+                        let tvx = p1.vx, tvy = p1.vy;
+                        p1.vx = p2.vx; p1.vy = p2.vy;
+                        p2.vx = tvx; p2.vy = tvy;
+
+                        let overlap = radius - dist;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+                        p1.x += nx * overlap * 0.5;
+                        p1.y += (ny * overlap * 0.5) / 1.5;
+                        p2.x -= nx * overlap * 0.5;
+                        p2.y -= (ny * overlap * 0.5) / 1.5;
+                    }
+                }
+            }
+            setTick(t => t + 1);
+        }, 30);
+        return () => clearInterval(interval);
+      }, []);
+
+      const handleMove = (e) => {
+        if (draggingRef.current) {
+          const dragged = particlesRef.current.find(p => p.id === draggingRef.current);
+          if (dragged) {
+              dragged.x = (e.clientX / window.innerWidth) * 100;
+              dragged.y = (e.clientY / window.innerHeight) * 100;
+          }
+        }
+      };
+
+      const handleUp = (e) => {
+        if (draggingRef.current) {
+          const dropX = (e.clientX / window.innerWidth) * 100;
+          const dropY = (e.clientY / window.innerHeight) * 100;
+          
+          const pArr = particlesRef.current;
+          const targetO2 = pArr.find(o2 => 
+              o2.type === 'o2' && o2.isTarget && !o2.o3 && 
+              Math.abs(o2.x - dropX) < 10 && Math.abs(o2.y - dropY) < 12
+          );
+
+          const draggedAtom = pArr.find(a => a.id === draggingRef.current);
+
+          if (targetO2) {
+              targetO2.o3 = true;
+              draggedAtom.x = 20 + Math.random() * 60;
+              draggedAtom.y = 40 + Math.random() * 40;
+              draggedAtom.vx = (Math.random() - 0.5) * 0.6;
+              draggedAtom.vy = (Math.random() - 0.5) * 0.6;
+          }
+        }
+        draggingRef.current = null;
+      };
+
+      return (
+        <div className="w-full h-full bg-slate-900 relative overflow-hidden" onPointerMove={handleMove} onPointerUp={handleUp}>
+          <div className="absolute top-20 w-[150%] h-32 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" style={{ left: '-25%' }} />
+          
+          <div className="absolute top-[32%] w-full flex flex-col items-center z-10 pointer-events-none drop-shadow-md px-2">
+            <p className="text-white/90 font-bold text-lg text-center bg-slate-900/60 px-4 py-1.5 rounded-full">
+              화면에 흩어진 O(원자)를 상층부의 O₂(분자)와 결합시켜 오존(O₃)을 만드세요!
+            </p>
+            <p className="text-sm font-normal text-cyan-200 text-center bg-slate-900/60 px-3 py-1 rounded-full mt-1.5">
+              (빛을 받는 상층부에 위치한 테두리가 두꺼운 산소 분자만 오존으로 변할 수 있습니다)
+            </p>
+          </div>
+          
+          {particlesRef.current.map(p => {
+              if (p.type === 'o2') {
+                  return (
+                      <div key={p.id} className="absolute z-10" style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}>
+                          <div className={`flex items-center justify-center font-bold transition-all duration-500 rounded-full
+                               ${p.o3 ? 'w-24 h-24 bg-cyan-400 text-white shadow-[0_0_30px_cyan] text-3xl' : 
+                                 p.isTarget ? 'w-20 h-20 border-[6px] border-cyan-500 bg-cyan-200 text-cyan-900 text-2xl shadow-[0_0_15px_rgba(34,211,238,0.5)]' :
+                                 'w-16 h-16 border-2 border-cyan-400 bg-cyan-200 text-cyan-900 text-xl pointer-events-none shadow-[0_0_10px_rgba(34,211,238,0.3)]'}`}
+                               style={{ animation: p.o3 ? 'floatO3 6s ease-in-out infinite' : 'none' }}>
+                            {p.o3 ? 'O₃' : 'O₂'}
+                          </div>
+                      </div>
+                  );
+              } else {
+                  return (
+                      <div key={p.id} className="absolute w-14 h-14 bg-pink-200 text-pink-900 rounded-full flex items-center justify-center text-2xl font-bold cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(244,114,182,0.5)] z-30"
+                           style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }} 
+                           onPointerDown={() => { draggingRef.current = p.id; }}>O</div>
+                  );
+              }
+          })}
+        </div>
+      );
+    }
+
+    // 7. 개구리 폴짝
+    function Stage7Cambrian() {
+      return (
+        <div className="w-full h-full relative overflow-hidden">
+          <div className="absolute top-0 w-full h-[70%] bg-amber-800 flex items-end pb-10 px-10">
+              <span className="text-7xl mr-10">🌿</span><span className="text-8xl mr-20">🌴</span><span className="text-7xl">🌿</span>
+          </div>
+          <div className="absolute bottom-0 w-full h-[30%] bg-blue-600 pl-10 pt-5 text-4xl">🦐</div>
+          <div className="absolute bottom-[25%] text-6xl" style={{ animation: 'frogJump 3s infinite linear' }}>🐸</div>
+        </div>
+      );
+    }
+
+    // 8. 생명과 멸종의 서사시 (수동 보상 버튼 추가 및 수정)
+    function Stage8Epic({ onPurifyComplete }) {
+      const [scene, setScene] = useState(0);
+      const maxScene = 5; 
+      
+      const [purified, setPurified] = useState(false);
+      const [dragPos, setDragPos] = useState({ x: window.innerWidth/2, y: window.innerHeight - 150 });
+      const [dragging, setDragging] = useState(false);
+
+      useEffect(() => {
+        if (scene < maxScene) {
+          const timer = setTimeout(() => setScene(s => s + 1), 3000);
+          return () => clearTimeout(timer);
+        }
+      }, [scene]);
+
+      const sceneData = [
+          { title: "🌿 고생대 삼림", img: slideImages.epic[0] },
+          { title: <>🌋 초대규모 화산 폭발(약 2억 5천만년 전) <br/> 대멸종 <br/> 해양 생물 96%, 육상 척추동물 70% 멸종</>, img: slideImages.epic[1] },
+          { title: <>🦕 다시 생명이 시작되다.<br/> 중생대 공룡 번성</>, img: slideImages.epic[2] },
+          { title: <>☄️ 거대 소행성 충돌(약 6천6백만년 전)<br/> 대멸종,<br/> 지구 생물 종의 약 75% 멸종</>, img: slideImages.epic[3] },
+          { title: <>🦣 죽음을 딛고 <br/>포유류의 시대 개막</>, img: slideImages.epic[4] },
+      ];
+
+      const handleMove = (e) => {
+        if (dragging) {
+          setDragPos({ x: e.clientX, y: e.clientY });
+          if (e.clientY < window.innerHeight / 2 + 50) { 
+              setPurified(true); 
+              setDragging(false); 
+          }
+        }
+      };
+
+      return (
+        <div className="w-full h-full relative overflow-hidden"
+             onPointerMove={scene === 5 ? handleMove : undefined} 
+             onPointerUp={scene === 5 ? () => setDragging(false) : undefined}>
+          
+          {sceneData.map((s, i) => (
+            <div key={i} className={`absolute inset-0 transition-opacity duration-1000 flex flex-col items-center justify-center bg-black
+                 ${scene === i ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+              <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url(${s.img})` }} />
+              <div className="text-4xl md:text-6xl font-bold drop-shadow-lg z-20 bg-black/50 p-6 rounded-3xl text-center leading-normal">{s.title}</div>
+            </div>
+          ))}
+
+          <div className={`absolute inset-0 transition-all duration-1000 ${scene === 5 ? 'opacity-100 z-20' : 'opacity-0 z-0 pointer-events-none'} 
+                           ${purified ? 'bg-sky-400' : 'bg-stone-500'}`}>
+              
+              {!purified && <div className="absolute inset-0 bg-red-900/30 animate-pulse pointer-events-none" />}
+              
+              <p className="absolute top-32 w-full text-center text-white font-bold drop-shadow-md text-xl z-10 pointer-events-none">
+                {purified ? "자연과 기술이 조화로운 미래!" : "인류세의 도래: 식물(🌱)을 드래그하여 공장(🏭)을 정화하세요!"}
+              </p>
+              
+              <div className="absolute top-[40%] left-1/2 -translate-x-1/2 text-[9rem] pointer-events-none transition-all duration-500">
+                {purified ? '🏡🌳' : '🏭💨'}
+              </div>
+
+              {!purified && scene === 5 && (
+                <div className="absolute text-7xl cursor-grab active:cursor-grabbing bg-white/20 p-4 rounded-full pointer-events-auto"
+                     style={{ left: dragPos.x, top: dragPos.y, transform: 'translate(-50%, -50%)' }} onPointerDown={() => setDragging(true)}>🌱</div>
+              )}
+
+              {/* 💡 정화 완료 시에만 나타나는 보상 획득용 확인 버튼 (이전 버튼과 크기 통일, 정지 상태) */}
+              {purified && scene === 5 && (
+                <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                    <button onClick={onPurifyComplete} className="px-6 py-3 bg-yellow-400 text-yellow-900 rounded-full font-bold text-lg shadow-lg border-2 border-yellow-300 transition-transform active:scale-95">
+                        확인
+                    </button>
+                </div>
+              )}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<HiddenProject />);
+  </script>
+</body>
+</html>
