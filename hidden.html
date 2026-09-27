@@ -294,7 +294,7 @@
              onPointerMove={handleMove} onPointerUp={handleUp}>
           
           <div className="absolute top-32 w-full text-center z-10 pointer-events-none text-white/90 text-lg drop-shadow-md font-bold">
-            {status === 'normal' && `시아노박테리아를 바다로 드래그 하여 10마리 이상 번식시키세요. (현재: ${clones.length}/10)`}
+            {status === 'normal' && `시아노박테리아(남세균)를 바다로 드래그 하여 10마리 이상 번식시키세요. (현재: ${clones.length}/10)`}
             {status === 'gathering' && <span className="text-yellow-300 font-bold animate-pulse">산소가 모이고 있습니다...</span>}
             {status === 'exploded' && <span className="text-cyan-300 font-extrabold text-3xl" style={{animation: 'pulseGlow 2s infinite'}}>대기 중 산소 농도 폭발! 산소 혁명 완료!</span>}
           </div>
