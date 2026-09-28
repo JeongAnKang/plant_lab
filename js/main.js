@@ -6,9 +6,9 @@
 // 예: 3으로 설정하면 1, 2, 3 미션이 모두 잠금 해제됨. (보상은 클리어해야만 줌)
 const TEACHER_ACCESS = Object.freeze({
   unlockedMission: 2,
-  unlockedSteps: Object.freeze({ 1: 5, 2: 1, 3: 0, 4: 0, 5: 0 })
+  unlockedSteps: Object.freeze({ 1: 5, 2: 1, 3: 1, 4: 1, 5: 1 })
 });
-const MISSION_STEP_TOTALS = Object.freeze({ 1: 5, 2: 5, 3: 5, 4: 4, 5: 2 });
+const MISSION_STEP_TOTALS = Object.freeze({ 1: 5, 2: 5, 3: 5, 4: 4, 5: 1 });
 
 
 // ==========================================
